@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>YAHAD 2026 — Connection Puzzle</title>
+<style>
+*{box-sizing:border-box}html,body{min-height:100%;margin:0}
+body{background:radial-gradient(circle at 50% 12%,#252525 0,#0d0d0e 44%,#050506 100%);color:#f5f1e8;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:480px;margin:auto;padding:25px 16px 44px;text-align:center}.kicker{font-size:11px;letter-spacing:.34em;font-weight:800;color:#b5aa96}
+h1{font-family:Georgia,serif;font-size:29px;font-weight:500;margin:8px 0 7px}.sub{font-size:13px;line-height:1.55;color:#aaa59c;margin:0 12px 18px}
+.identity{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#151516;border:1px solid #383633;border-radius:14px;padding:10px 13px;margin-bottom:12px;text-align:left}
+.identity small{display:block;color:#8f8a82;font-size:9px;letter-spacing:.16em;font-weight:800}.identity strong{font-size:14px}.symbol{font-size:28px}
+.card{background:rgba(17,17,18,.9);border:1px solid #383633;border-radius:20px;padding:14px;box-shadow:0 24px 70px rgba(0,0,0,.45)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:#aaa59c;margin-bottom:11px}
+#board{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;aspect-ratio:1;width:100%;overflow:hidden;border-radius:13px;background:#050505}
+.tile{border:0;padding:0;position:relative;overflow:hidden;background:#111;aspect-ratio:1;touch-action:manipulation;outline:none}
+.tile.selected{box-shadow:inset 0 0 0 3px #e5d5ad;transform:scale(.95);z-index:2}.tile.locked{background:linear-gradient(145deg,#191919,#070707)}
+.piece{position:absolute;width:300%;height:300%;max-width:none;pointer-events:none;user-select:none}
+.lockmark{position:absolute;inset:0;display:grid;place-items:center;font-size:30px;color:#d7c89f}
+button.action{margin-top:14px;border:1px solid #514b41;border-radius:12px;background:#e7d6ac;color:#181714;min-height:48px;padding:0 20px;font-weight:850;font-size:14px}
+#connection,#reveal{display:none;margin-top:15px;border:1px solid #49443b;border-radius:15px;padding:19px;background:linear-gradient(145deg,#181818,#0e0e0f)}
+.eyebrow{font-size:10px;letter-spacing:.25em;font-weight:900;color:#c9b98e}.target{font-size:48px;margin:8px 0 2px}.targetname{font-size:20px;font-weight:850}
+.instructions{font-size:13px;color:#aaa59c;line-height:1.55;margin:10px 0}
+input{width:100%;font-size:22px;letter-spacing:.2em;text-align:center;padding:12px;border-radius:10px;border:1px solid #5a554b;background:#080809;color:#fff;text-transform:uppercase}
+#error{min-height:18px;color:#e9a49e;font-size:12px;margin-top:7px}.letter{font-family:Georgia,serif;font-size:62px;line-height:1;margin:7px 0;color:#f4e5bd}.team{font-size:18px;font-weight:850}
+.note{font-size:10px;color:#77736c;margin-top:14px}.success{color:#bcd8ad}
+</style>
+</head>
+<body><main>
+<div class="kicker">YAHAD 2026</div><h1>The pieces know where you belong.</h1>
+<p class="sub">Begin alone. Somewhere along the way, you may discover that one piece was never yours to carry.</p>
+
+<div class="identity">
+ <div><small>YOUR CONNECTION IDENTITY</small><strong id="myIdentity"></strong><small style="margin-top:5px">YOUR HUMAN KEY</small><strong id="myKey"></strong></div>
+ <div id="mySymbol" class="symbol"></div>
+</div>
+
+<section class="card">
+<div class="top"><span id="status">Select two pieces to exchange them.</span><strong id="moves">0 moves</strong></div>
+<div id="board"></div>
+
+<div id="connection">
+ <div class="eyebrow">CONNECTION REQUIRED</div>
+ <div id="targetSymbol" class="target"></div><div id="targetName" class="targetname"></div>
+ <div class="instructions">One piece is locked.<br><br>Find <strong>any person carrying this symbol</strong>. Introduce yourselves and ask each other's <strong>name + church/parish</strong>. Then ask for their Human Key.</div>
+ <input id="keyInput" maxlength="4" placeholder="KEY" autocomplete="off">
+ <button id="unlock" class="action" type="button">UNLOCK THE PIECE</button>
+ <div id="error"></div>
+</div>
+
+<div id="reveal">
+ <div class="eyebrow">IDENTITY FOUND</div><div id="letter" class="letter"></div><div id="team" class="team"></div>
+ <div class="instructions">Your connection brought you here.<br><strong>Now find everyone carrying your colour.</strong><br><br>YAHAD — Together, As One.</div>
+</div>
+<button id="shuffle" class="action" type="button">RESHUFFLE PUZZLE</button>
+</section>
+<p class="note">KEEP YOUR FINAL COLOUR SECRET UNTIL THE ORGANIZER GIVES THE SIGNAL.</p>
+</main>
+<script>
+const teams={y:{letter:"Y",name:"RED",img:"y-red.png"},ag:{letter:"A",name:"GREEN",img:"a-green.png"},h:{letter:"H",name:"YELLOW",img:"h-yellow.png"},ab:{letter:"A",name:"BROWN",img:"a-brown.png"},d:{letter:"D",name:"BLUE",img:"d-blue.png"}};
+const symbols=[
+ {s:"🌙",n:"MOON",k:"M482"},{s:"⭐",n:"STAR",k:"S731"},{s:"🔥",n:"FLAME",k:"F264"},{s:"🌊",n:"WAVE",k:"W593"},{s:"🌿",n:"LEAF",k:"L817"},
+ {s:"🕊️",n:"DOVE",k:"D346"},{s:"☀️",n:"SUN",k:"U925"},{s:"❤️",n:"HEART",k:"H158"},{s:"⚓",n:"ANCHOR",k:"A674"},{s:"👑",n:"CROWN",k:"C239"}
+];
+const q=new URLSearchParams(location.search),tk=teams[q.get("team")]?q.get("team"):"y",team=teams[tk];
+const store="yahad_symbol_"+tk;let si=localStorage.getItem(store);
+if(si===null){si=Math.floor(Math.random()*symbols.length);localStorage.setItem(store,si)} si=Number(si);
+const mine=symbols[si],target=symbols[(si+1)%symbols.length];
+myIdentity.textContent=mine.n;myKey.textContent=mine.k;mySymbol.textContent=mine.s;targetSymbol.textContent=target.s;targetName.textContent="FIND "+target.n;
+letter.textContent=team.letter;document.getElementById("team").textContent="TEAM "+team.name;
+
+let order=[],selected=null,moves=0,unlocked=sessionStorage.getItem("yahad_unlock_"+tk)==="1",connectionShown=false,done=false;
+function scramble(){order=[0,1,2,3,4,5,6,7,8];do{for(let i=8;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}}while(order.every((v,i)=>v===i))}
+function render(){board.innerHTML="";order.forEach((piece,pos)=>{const b=document.createElement("button");b.type="button";b.className="tile"+(selected===pos?" selected":"");
+ if(pos===8&&!unlocked){b.classList.add("locked");const lm=document.createElement("span");lm.className="lockmark";lm.textContent="🔒";b.appendChild(lm)}
+ else{const r=Math.floor(piece/3),c=piece%3,im=document.createElement("img");im.className="piece";im.src=team.img;im.alt="";im.style.left=(-c*100)+"%";im.style.top=(-r*100)+"%";b.appendChild(im);b.onclick=()=>pick(pos)}
+ board.appendChild(b)})}
+function pick(pos){if(done||(!unlocked&&pos===8))return;if(!unlocked&&moves>=3){showConnection();return}
+ if(selected===null){selected=pos;status.textContent="Choose the piece to exchange.";render();return}
+ if(selected===pos){selected=null;status.textContent="Selection cleared.";render();return}
+ [order[selected],order[pos]]=[order[pos],order[selected]];selected=null;moves++;movesEl.textContent=moves+(moves===1?" move":" moves");render();
+ if(!unlocked&&moves>=3){setTimeout(showConnection,250);return}
+ check()}
+function showConnection(){connectionShown=true;connection.style.display="block";status.textContent="One piece is locked. Find your connection.";connection.scrollIntoView({behavior:"smooth",block:"center"})}
+function check(){if(unlocked&&order.every((v,i)=>v===i)){done=true;status.textContent="Complete.";reveal.style.display="block";reveal.scrollIntoView({behavior:"smooth",block:"center"})}else if(unlocked)status.textContent="Connection made. Finish the puzzle."}
+unlock.onclick=()=>{const v=keyInput.value.trim().toUpperCase();if(v===mine.k){error.textContent="That is your own key. Find "+target.n+".";return}
+ if(v!==target.k){error.textContent="That key does not belong to "+target.n+". Keep looking.";return}
+ unlocked=true;sessionStorage.setItem("yahad_unlock_"+tk,"1");error.textContent="✓ CONNECTION MADE — PIECE UNLOCKED";error.className="success";connection.style.display="none";status.textContent="Connection made. Finish the puzzle.";render();check()}
+function reset(){moves=0;selected=null;done=false;movesEl.textContent="0 moves";reveal.style.display="none";status.textContent=unlocked?"Connection made. Finish the puzzle.":"Select two pieces to exchange them.";scramble();render()}
+shuffle.onclick=reset;reset();
+</script></body></html>
